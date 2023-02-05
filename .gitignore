@@ -1,1 +1,3 @@
 .venv/
+.envrc.cache
+__pycache__/
