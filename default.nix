@@ -20,17 +20,42 @@ pkgs.mkShell rec {
     eval "$extras"
   '';
   extras = ''
-    alias pymod="pip list" #show installed modules
+    pymod() {
+    	pip list
+    }
 
-    pyadd(){ # add package to requirements.txt so it will be commited
-      if ! cat requirements.txt | grep $1 &>/dev/null;then
-        echo $1 >> requirements.txt
-        pip3 install -r requirements.txt
-      fi
+    pyadd() {
+    	for pkg in "$@"; do
+    		if ! grep -q "$pkg" requirements.txt; then
+    			if pip install "$pkg"; then
+    				echo "$pkg" >>requirements.txt
+          fi
+    		fi
+    	done
     }
-    pyrm(){ #remove package from requirements.txt so it won't be commited
-      cat requirements.txt | sed -i "/$1/d" requirements.txt
-      pip uninstall $1 -y
+
+    pyrm() {
+    	if [ $# -eq 0 ] && [ -e ./requirements.txt ] && [ -s ./requirements.txt ]; then
+    		pkg=$(cat requirements.txt | fzf)
+    		if [ -n "$pkg" ]; then
+    			grep -v "$pkg" requirements.txt >requirements.tmp
+    			mv requirements.tmp requirements.txt
+    			pip uninstall "$pkg" -y
+    		fi
+    	else
+    		for pkg in "$@"; do
+    			grep -v "$pkg" requirements.txt >requirements.tmp
+    			mv requirements.tmp requirements.txt
+    			pip uninstall "$pkg" -y
+    		done
+    	fi
     }
+
+    if [ -n "$IN_NIX_SHELL" ]; then
+    	echo "Extra Functions:"
+    	echo "pymod : Show a list of installed Python packages."
+    	echo "pyadd : Add packages to requirements.txt and install them."
+    	echo "pyrm  : Remove packages from requirements.txt and uninstall them."
+    fi
   '';
 }
