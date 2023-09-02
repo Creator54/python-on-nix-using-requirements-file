@@ -32,7 +32,8 @@ pkgs.mkShell rec {
     	for pkg in "$@"; do
     		if ! grep -q "$pkg" requirements.txt; then
     			if pip install "$pkg"; then
-    				echo "$pkg" >>requirements.txt
+            version=$(pip list | grep $pkg | xargs | cut -d ' ' -f2)
+    				echo "$pkg==$version" >>requirements.txt
           fi
     		fi
     	done
