@@ -17,10 +17,12 @@ pkgs.mkShell rec {
 
     source .venv/bin/activate
 
-    python -m pip install --upgrade pip
+    python -m pip install --cache-dir=$TMPDIR --upgrade pip
+
+    export TMPDIR=/tmp
 
     if [ -e requirements.txt ]; then
-      pip install -r requirements.txt
+      pip install --cache-dir=$TMPDIR -r requirements.txt
     fi
   '';
   extras = ''
@@ -31,7 +33,7 @@ pkgs.mkShell rec {
     pyadd() {
     	for pkg in "$@"; do
     		if ! grep -q "$pkg" requirements.txt; then
-    			if pip install "$pkg"; then
+          if pip install --cache-dir=$TMPDIR "$pkg"; then
             version=$(pip list | grep $pkg | xargs | cut -d ' ' -f2)
     				echo "$pkg==$version" >>requirements.txt
           fi
